@@ -14,7 +14,7 @@ const buttonVariants = cva(
         secondary: "bg-brand-subtle text-brand-subtle-text hover:bg-brand-subtle-hover",
         outline: "border border-border-strong bg-surface text-fg hover:bg-hover",
         ghost: "text-fg hover:bg-hover",
-        danger: "bg-fg-danger text-white hover:opacity-90",
+        danger: "bg-danger text-danger-text hover:bg-danger-hover",
         link: "text-fg-brand underline-offset-4 hover:underline",
       },
       size: {
@@ -49,7 +49,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <Comp
         ref={ref}
-        type={asChild ? undefined : type ?? "button"}
+        type={asChild ? type : (type ?? "button")}
         className={cn(buttonVariants({ variant, size }), className)}
         {...props}
       />

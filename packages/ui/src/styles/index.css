@@ -44,6 +44,11 @@
   --color-brand-subtle-text: var(--yp-color-brand-subtle-text);
   --color-brand-subtle-hover: var(--yp-color-brand-subtle-hover);
 
+  /* Danger (solid button pair, contrast-checked per theme) */
+  --color-danger: var(--yp-color-danger-solid);
+  --color-danger-hover: var(--yp-color-danger-solid-hover);
+  --color-danger-text: var(--yp-color-danger-solid-text);
+
   /* Interactive states */
   --color-hover: var(--yp-color-interactive-hover);
   --color-pressed: var(--yp-color-interactive-pressed);
@@ -78,6 +83,11 @@
   --ease-standard: var(--yp-easing-standard);
   --ease-entrance: var(--yp-easing-entrance);
   --ease-exit: var(--yp-easing-exit);
+
+  /* Standalone line-height utilities (leading-base, leading-heading, …) */
+  --leading-base: var(--yp-typography-line-height-base);
+  --leading-sm: var(--yp-typography-line-height-sm);
+  --leading-heading: var(--yp-typography-line-height-heading);
 
   /* Typography scale (size + paired line-height) */
   --text-xs: var(--yp-typography-font-size-xs);
@@ -122,6 +132,12 @@
 
 [dir="rtl"] .animate-progress-indeterminate {
   animation-direction: reverse;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-progress-indeterminate {
+    animation: none;
+  }
 }
 
 /* Focus visibility contract: one consistent, unobscured ring everywhere. */

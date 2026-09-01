@@ -9,7 +9,7 @@
     "text": {
       "default": { "$value": "{color.gray.900}" },
       "muted": { "$value": "{color.gray.600}" },
-      "subtle": { "$value": "{color.gray.400}" },
+      "subtle": { "$value": "{color.gray.500}" },
       "inverse": { "$value": "{color.gray.50}" },
       "brand": { "$value": "{color.brand.700}" },
       "danger": { "$value": "{color.red.700}" },
@@ -23,12 +23,17 @@
       "danger": { "$value": "{color.red.500}" }
     },
     "brand": {
-      "solid": { "$value": "{color.brand.600}" },
-      "solid-hover": { "$value": "{color.brand.700}" },
+      "solid": { "$value": "{color.brand.700}" },
+      "solid-hover": { "$value": "{color.brand.800}" },
       "solid-text": { "$value": "{color.white}" },
       "subtle": { "$value": "{color.brand.50}" },
       "subtle-text": { "$value": "{color.brand.700}" },
       "subtle-hover": { "$value": "{color.brand.100}" }
+    },
+    "danger": {
+      "solid": { "$value": "{color.red.600}" },
+      "solid-hover": { "$value": "{color.red.700}" },
+      "solid-text": { "$value": "{color.white}" }
     },
     "interactive": {
       "hover": { "$value": "{color.gray.100}" },

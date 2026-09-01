@@ -65,7 +65,7 @@ export function Box<T extends React.ElementType = "div">({
   ...props
 }: BoxProps<T>) {
   const Component = (as ?? "div") as React.ElementType;
-  const space = (token: SpaceToken) => `var(--yp-space-${token})`;
+  const space = (token: SpaceToken) => `var(--yp-space-${token.replace(".", "-")})`;
   const s: React.CSSProperties = {
     paddingLeft: paddingLeft ?? paddingX ?? padding,
     paddingRight: paddingRight ?? paddingX ?? padding,

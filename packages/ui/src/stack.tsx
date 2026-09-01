@@ -31,7 +31,7 @@ export function Stack<T extends React.ElementType = "div">({
   return (
     <Box
       as="div"
-      gap={`var(--yp-space-${gap})`}
+      gap={`var(--yp-space-${gap.replace(".", "-")})`}
       style={{
         display: "flex",
         flexDirection: direction,

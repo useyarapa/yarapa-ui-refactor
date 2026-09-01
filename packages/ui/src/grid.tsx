@@ -37,7 +37,7 @@ export function Grid<T extends React.ElementType = "div">({
   return (
     <Box
       as="div"
-      gap={`var(--yp-space-${gap})`}
+      gap={`var(--yp-space-${gap.replace(".", "-")})`}
       style={{ display: "grid", gridTemplateColumns: template, ...style }}
       {...(props as Record<string, unknown>)}
     />

@@ -22,7 +22,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
     return (
       <Comp
         ref={ref}
-        type={asChild ? undefined : type ?? "button"}
+        type={asChild ? type : (type ?? "button")}
         aria-busy={undefined}
         className={cn(buttonVariants({ variant, size: "icon" }), "rounded-md", className)}
         {...props}
