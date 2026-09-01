@@ -58,6 +58,10 @@ jobs:
       - name: Build Storybook
         run: pnpm --filter @repo/ui build-storybook
 
+      - name: Install Playwright browsers
+        working-directory: packages/ui
+        run: pnpm exec playwright install --with-deps chromium
+
       # Serves the static Storybook build and runs @storybook/test-runner:
       # axe-core accessibility assertions (a11y: test: "error") plus
       # play-function interaction tests for every story.

@@ -30,6 +30,7 @@
     "concurrently": "^10.0.5",
     "eslint": "10.9.1",
     "http-server": "^14.1.1",
+    "playwright": "^1.62.1",
     "storybook": "^10.5.10",
     "tailwindcss": "^4.3.3",
     "typescript": "7.0.2",
