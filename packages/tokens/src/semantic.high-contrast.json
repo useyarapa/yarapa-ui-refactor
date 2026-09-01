@@ -1,0 +1,24 @@
+{
+  "$comment": "Overrides on top of the light theme for high-contrast contexts. Forced-colors mode is additionally handled via the forced-colors media query in CSS; these tokens cover opt-in high-contrast theming.",
+  "color": {
+    "text": {
+      "default": { "$value": "{color.gray.950}" },
+      "muted": { "$value": "{color.gray.700}" },
+      "subtle": { "$value": "{color.gray.600}" }
+    },
+    "border": {
+      "default": { "$value": "{color.gray.500}" },
+      "strong": { "$value": "{color.gray.900}" }
+    },
+    "brand": {
+      "solid": { "$value": "{color.brand.800}" },
+      "solid-hover": { "$value": "{color.brand.900}" }
+    }
+  },
+  "elevation": {
+    "sm": { "$value": "0 0 0 1px {color.gray.900}" },
+    "md": { "$value": "0 0 0 1px {color.gray.900}" },
+    "lg": { "$value": "0 0 0 1px {color.gray.900}" },
+    "overlay": { "$value": "0 0 0 1px {color.gray.900}" }
+  }
+}

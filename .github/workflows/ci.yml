@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint, typecheck & build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build design tokens
+        run: pnpm --filter @repo/tokens build
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm check-types
+
+      - name: Build
+        run: pnpm build
+
+  components:
+    name: Component checks (a11y & interaction)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build design tokens
+        run: pnpm --filter @repo/tokens build
+
+      - name: Build Storybook
+        run: pnpm --filter @repo/ui build-storybook
+
+      # Runs axe-core accessibility assertions (a11y: test: "error") and
+      # play-function interaction tests for every story via @storybook/test-runner.
+      - name: Run Storybook test suite
+        run: pnpm --filter @repo/ui exec test-storybook --url "file://${{ github.workspace }}/packages/ui/storybook-static" --index-json 2>&1 || \
+            (npx concurrently -k -s first -n "SB,TEST" \
+              "pnpm --filter @repo/ui exec storybook dev -p 6006 --ci --no-open" \
+              "pnpm --filter @repo/ui exec test-storybook --maxWorkers=2")
+
+      # Visual regression: enable after adding the CHROMATIC_PROJECT_TOKEN
+      # secret and running `chromatic --exit-zero-on-changes` here, or via the
+      # Chromatic GitHub App (see docs/ui-foundation.md).

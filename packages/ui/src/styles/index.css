@@ -1,0 +1,135 @@
+/* Entry stylesheet for the YARAPA UI foundation.
+   Import once in an app: `import "@repo/ui/styles.css"` */
+@import "@repo/tokens/css";
+@import "tailwindcss" source("../");
+
+/*
+  Map semantic tokens (CSS variables from @repo/tokens) into Tailwind's theme.
+  `inline` keeps var() references so [data-theme="dark"] /
+  [data-theme="high-contrast"] / forced-colors cascades apply at runtime.
+*/
+@theme inline {
+  --font-sans: var(--yp-typography-font-family-sans);
+  --font-mono: var(--yp-typography-font-family-mono);
+
+  /* Surfaces */
+  --color-canvas: var(--yp-color-bg-canvas);
+  --color-surface: var(--yp-color-bg-surface);
+  --color-raised: var(--yp-color-bg-raised);
+  --color-canvas-inverse: var(--yp-color-bg-inverse);
+
+  /* Foreground / text */
+  --color-fg: var(--yp-color-text-default);
+  --color-fg-muted: var(--yp-color-text-muted);
+  --color-fg-subtle: var(--yp-color-text-subtle);
+  --color-fg-inverse: var(--yp-color-text-inverse);
+  --color-fg-brand: var(--yp-color-text-brand);
+  --color-fg-danger: var(--yp-color-text-danger);
+  --color-fg-success: var(--yp-color-text-success);
+  --color-fg-warning: var(--yp-color-text-warning);
+
+  /* Borders */
+  --color-border: var(--yp-color-border-default);
+  --color-border-strong: var(--yp-color-border-strong);
+  --color-border-focus: var(--yp-color-border-focus);
+  --color-border-danger: var(--yp-color-border-danger);
+
+  /* Brand */
+  --color-brand: var(--yp-color-brand-solid);
+  --color-brand-hover: var(--yp-color-brand-solid-hover);
+  --color-brand-text: var(--yp-color-brand-solid-text);
+  --color-brand-subtle: var(--yp-color-brand-subtle);
+  --color-brand-subtle-text: var(--yp-color-brand-subtle-text);
+  --color-brand-subtle-hover: var(--yp-color-brand-subtle-hover);
+
+  /* Interactive states */
+  --color-hover: var(--yp-color-interactive-hover);
+  --color-pressed: var(--yp-color-interactive-pressed);
+  --color-selected: var(--yp-color-interactive-selected);
+
+  /* Feedback */
+  --color-danger-subtle: var(--yp-color-feedback-danger-subtle);
+  --color-success-subtle: var(--yp-color-feedback-success-subtle);
+  --color-warning-subtle: var(--yp-color-feedback-warning-subtle);
+  --color-info-subtle: var(--yp-color-feedback-info-subtle);
+  --color-danger-border: var(--yp-color-feedback-danger-border);
+  --color-success-border: var(--yp-color-feedback-success-border);
+  --color-warning-border: var(--yp-color-feedback-warning-border);
+  --color-info-border: var(--yp-color-feedback-info-border);
+
+  /* Scrim */
+  --color-scrim: var(--yp-color-overlay-scrim);
+
+  /* Radius */
+  --radius-sm: var(--yp-radius-sm);
+  --radius-md: var(--yp-radius-md);
+  --radius-lg: var(--yp-radius-lg);
+  --radius-xl: var(--yp-radius-xl);
+
+  /* Elevation */
+  --shadow-sm: var(--yp-shadow-sm);
+  --shadow-md: var(--yp-shadow-md);
+  --shadow-lg: var(--yp-shadow-lg);
+  --shadow-overlay: var(--yp-shadow-overlay);
+
+  /* Motion */
+  --ease-standard: var(--yp-easing-standard);
+  --ease-entrance: var(--yp-easing-entrance);
+  --ease-exit: var(--yp-easing-exit);
+
+  /* Typography scale (size + paired line-height) */
+  --text-xs: var(--yp-typography-font-size-xs);
+  --text-xs--line-height: var(--yp-typography-line-height-sm);
+  --text-sm: var(--yp-typography-font-size-sm);
+  --text-sm--line-height: var(--yp-typography-line-height-base);
+  --text-base: var(--yp-typography-font-size-base);
+  --text-base--line-height: var(--yp-typography-line-height-base);
+  --text-lg: var(--yp-typography-font-size-lg);
+  --text-lg--line-height: var(--yp-typography-line-height-base);
+  --text-xl: var(--yp-typography-font-size-xl);
+  --text-xl--line-height: var(--yp-typography-line-height-sm);
+  --text-2xl: var(--yp-typography-font-size-2xl);
+  --text-2xl--line-height: var(--yp-typography-line-height-heading);
+  --text-3xl: var(--yp-typography-font-size-3xl);
+  --text-3xl--line-height: var(--yp-typography-line-height-heading);
+  --text-4xl: var(--yp-typography-font-size-4xl);
+  --text-4xl--line-height: var(--yp-typography-line-height-heading);
+
+  /* z-index scale */
+  --z-dropdown: var(--yp-z-index-dropdown);
+  --z-sticky: var(--yp-z-index-sticky);
+  --z-overlay: var(--yp-z-index-overlay);
+  --z-modal: var(--yp-z-index-modal);
+  --z-toast: var(--yp-z-index-toast);
+  --z-tooltip: var(--yp-z-index-tooltip);
+}
+
+/* Component-level animations (kept small; disabled under reduced motion via tokens). */
+@keyframes yp-progress-indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+.animate-progress-indeterminate {
+  animation: yp-progress-indeterminate 1.5s var(--yp-easing-standard) infinite;
+}
+
+/* Focus visibility contract: one consistent, unobscured ring everywhere. */
+:where([data-yp-focus-ring]) {
+  outline: 2px solid var(--yp-color-border-focus);
+  outline-offset: 2px;
+}
+
+:where(:focus-visible) {
+  outline: 2px solid var(--yp-color-border-focus);
+  outline-offset: 2px;
+}
+
+/* Respect RTL at the base layer; logical properties elsewhere. */
+[dir="rtl"] .yp-flip-x {
+  transform: scaleX(-1);
+}
