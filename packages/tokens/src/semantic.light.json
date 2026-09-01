@@ -1,0 +1,61 @@
+{
+  "color": {
+    "bg": {
+      "canvas": { "$value": "{color.gray.50}" },
+      "surface": { "$value": "{color.white}" },
+      "raised": { "$value": "{color.white}" },
+      "inverse": { "$value": "{color.gray.900}" }
+    },
+    "text": {
+      "default": { "$value": "{color.gray.900}" },
+      "muted": { "$value": "{color.gray.600}" },
+      "subtle": { "$value": "{color.gray.500}" },
+      "inverse": { "$value": "{color.gray.50}" },
+      "brand": { "$value": "{color.brand.700}" },
+      "danger": { "$value": "{color.red.700}" },
+      "success": { "$value": "{color.green.700}" },
+      "warning": { "$value": "{color.amber.700}" }
+    },
+    "border": {
+      "default": { "$value": "{color.gray.200}" },
+      "strong": { "$value": "{color.gray.300}" },
+      "focus": { "$value": "{color.brand.600}" },
+      "danger": { "$value": "{color.red.500}" }
+    },
+    "brand": {
+      "solid": { "$value": "{color.brand.700}" },
+      "solid-hover": { "$value": "{color.brand.800}" },
+      "solid-text": { "$value": "{color.white}" },
+      "subtle": { "$value": "{color.brand.50}" },
+      "subtle-text": { "$value": "{color.brand.700}" },
+      "subtle-hover": { "$value": "{color.brand.100}" }
+    },
+    "danger": {
+      "solid": { "$value": "{color.red.600}" },
+      "solid-hover": { "$value": "{color.red.700}" },
+      "solid-text": { "$value": "{color.white}" }
+    },
+    "interactive": {
+      "hover": { "$value": "{color.gray.100}" },
+      "pressed": { "$value": "{color.gray.200}" },
+      "selected": { "$value": "{color.brand.50}" }
+    },
+    "feedback": {
+      "danger-subtle": { "$value": "{color.red.50}" },
+      "danger-border": { "$value": "{color.red.300}" },
+      "success-subtle": { "$value": "{color.green.50}" },
+      "success-border": { "$value": "{color.green.300}" },
+      "warning-subtle": { "$value": "{color.amber.50}" },
+      "warning-border": { "$value": "{color.amber.300}" },
+      "info-subtle": { "$value": "{color.brand.50}" },
+      "info-border": { "$value": "{color.brand.200}" }
+    },
+    "overlay-scrim": { "$value": "rgba(16, 24, 40, 0.55)" }
+  },
+  "shadow": {
+    "sm": { "$value": "{elevation.sm}" },
+    "md": { "$value": "{elevation.md}" },
+    "lg": { "$value": "{elevation.lg}" },
+    "overlay": { "$value": "{elevation.overlay}" }
+  }
+}

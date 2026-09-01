@@ -1,102 +1,123 @@
-import Image, { type ImageProps } from "next/image";
+"use client";
+
 import { Button } from "@repo/ui/button";
-import styles from "./page.module.css";
-
-type Props = Omit<ImageProps, "src"> & {
-  srcLight: string;
-  srcDark: string;
-};
-
-const ThemeImage = (props: Props) => {
-  const { srcLight, srcDark, ...rest } = props;
-
-  return (
-    <>
-      <Image {...rest} src={srcLight} className="imgLight" />
-      <Image {...rest} src={srcDark} className="imgDark" />
-    </>
-  );
-};
+import { IconButton } from "@repo/ui/icon-button";
+import { Badge } from "@repo/ui/badge";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@repo/ui/card";
+import { FormField, FormLabel, FormHint, FormError } from "@repo/ui/form-field";
+import { Input } from "@repo/ui/input";
+import { Switch } from "@repo/ui/switch";
+import { Separator } from "@repo/ui/separator";
+import { Spinner } from "@repo/ui/spinner";
+import { Alert, AlertTitle, AlertDescription } from "@repo/ui/alert";
+import { Container } from "@repo/ui/container";
+import { Stack, Inline } from "@repo/ui/stack";
+import { Cross2Icon } from "@radix-ui/react-icons";
 
 export default function Home() {
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <ThemeImage
-          className={styles.logo}
-          srcLight="turborepo-dark.svg"
-          srcDark="turborepo-light.svg"
-          alt="Turborepo logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>apps/web/app/page.tsx</code>
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <Container className="py-12">
+      <Stack gap="8">
+        <header className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-semibold">YARAPA</h1>
+            <p className="mt-1 text-fg-muted">
+              Product UI built on the semantic design-token foundation.
+            </p>
+          </div>
+          <Badge tone="brand">UI foundation</Badge>
+        </header>
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new/clone?demo-description=Learn+to+implement+a+monorepo+with+a+two+Next.js+sites+that+has+installed+three+local+packages.&demo-image=%2F%2Fimages.ctfassets.net%2Fe5382hct74si%2F4K8ZISWAzJ8X1504ca0zmC%2F0b21a1c6246add355e55816278ef54bc%2FBasic.png&demo-title=Monorepo+with+Turborepo&demo-url=https%3A%2F%2Fexamples-basic-web.vercel.sh%2F&from=templates&project-name=Monorepo+with+Turborepo&repository-name=monorepo-turborepo&repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fturborepo%2Ftree%2Fmain%2Fexamples%2Fbasic&root-directory=apps%2Fdocs&skippable-integrations=1&teamSlug=vercel&utm_source=create-turbo"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://turborepo.dev/docs?utm_source"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
-        </div>
-        <Button appName="web" className={styles.secondary}>
-          Open alert
-        </Button>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com/templates?search=turborepo&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://turborepo.dev?utm_source=create-turbo"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to turborepo.dev →
-        </a>
-      </footer>
-    </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Sign in</CardTitle>
+            <CardDescription>
+              Form controls compose through FormField for labels, hints and
+              errors.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Stack gap="4">
+              <FormField>
+                <FormLabel htmlFor="email">Email</FormLabel>
+                <Input id="email" type="email" placeholder="you@example.com" />
+                <FormHint>We never share your email.</FormHint>
+              </FormField>
+              <FormField>
+                <FormLabel htmlFor="password">Password</FormLabel>
+                <Input
+                  id="password"
+                  type="password"
+                  aria-invalid
+                  aria-describedby="password-error"
+                />
+                <FormError id="password-error">
+                  Password must be at least 8 characters.
+                </FormError>
+              </FormField>
+              <Inline gap="3">
+                <Switch id="remember" defaultChecked />
+                <FormLabel htmlFor="remember">Keep me signed in</FormLabel>
+              </Inline>
+            </Stack>
+          </CardContent>
+          <CardFooter>
+            <Button>Sign in</Button>
+            <Button variant="ghost">Forgot password?</Button>
+          </CardFooter>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>System status</CardTitle>
+            <CardDescription>Feedback components with semantic tones.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Stack gap="4">
+              <Alert tone="success">
+                <AlertTitle>All systems operational</AlertTitle>
+                <AlertDescription>Last checked 2 minutes ago.</AlertDescription>
+              </Alert>
+              <Alert tone="warning" role="alert">
+                <AlertTitle>Scheduled maintenance</AlertTitle>
+                <AlertDescription>Sunday 02:00–03:00 (GMT+7).</AlertDescription>
+              </Alert>
+            </Stack>
+          </CardContent>
+          <CardFooter>
+            <Button variant="outline">
+              <Spinner className="size-4" />
+              Refreshing…
+            </Button>
+          </CardFooter>
+        </Card>
+
+        <section>
+          <h2 className="text-xl font-semibold">Component states</h2>
+          <Separator className="my-4" />
+          <Inline gap="3" wrap>
+            <Button size="sm">Small</Button>
+            <Button>Default</Button>
+            <Button size="lg" variant="outline">
+              Large outline
+            </Button>
+            <Button variant="danger" disabled>
+              Danger disabled
+            </Button>
+            <IconButton aria-label="Dismiss notification">
+              <Cross2Icon />
+            </IconButton>
+            <Badge tone="success">Passing</Badge>
+          </Inline>
+        </section>
+      </Stack>
+    </Container>
   );
 }
