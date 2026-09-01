@@ -41,7 +41,7 @@ export const Toast = React.forwardRef<
   <ToastPrimitive.Root
     ref={ref}
     className={cn(
-      "rounded-md border p-4 shadow-lg",
+      "relative rounded-md border p-4 shadow-lg",
       toastToneClasses[tone],
       className,
     )}

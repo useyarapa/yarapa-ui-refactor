@@ -7,7 +7,8 @@ import { cn } from "./cn";
 /**
  * Determinate (0–100 `value`) or indeterminate (`value={null}`) progress bar.
  * Pair with visually hidden or adjacent text describing the amount, since
- * the bar itself has no text content.
+ * the bar itself has no text content. The fill grows from the inline start
+ * so it is direction-aware under RTL.
  */
 export const Progress = React.forwardRef<
   React.ComponentRef<typeof ProgressPrimitive.Root>,
@@ -21,10 +22,10 @@ export const Progress = React.forwardRef<
   >
     <ProgressPrimitive.Indicator
       className={cn(
-        "h-full rounded-full bg-brand transition-transform duration-300 ease-standard motion-reduce:transition-none",
-        value == null ? "w-1/3 animate-progress-indeterminate" : "w-full",
+        "h-full w-full origin-left rounded-full bg-brand transition-transform duration-300 ease-standard motion-reduce:transition-none rtl:origin-right",
+        value == null && "animate-progress-indeterminate",
       )}
-      style={value != null ? { transform: `translateX(-${100 - value}%)` } : undefined}
+      style={value != null ? { transform: `scaleX(${Math.min(Math.max(value, 0), 100) / 100})` } : undefined}
     />
   </ProgressPrimitive.Root>
 ));

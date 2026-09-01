@@ -20,12 +20,9 @@ export const Checkbox = React.forwardRef<
     )}
     {...props}
   >
-    <CheckboxPrimitive.Indicator className="flex items-center justify-center text-current">
-      {props.checked === "indeterminate" ? (
-        <MinusIcon className="size-3.5" />
-      ) : (
-        <CheckIcon className="size-3.5" />
-      )}
+    <CheckboxPrimitive.Indicator className="group flex items-center justify-center text-current">
+      <CheckIcon className="size-3.5 group-data-[state=indeterminate]:hidden" />
+      <MinusIcon className="hidden size-3.5 group-data-[state=indeterminate]:block" />
     </CheckboxPrimitive.Indicator>
   </CheckboxPrimitive.Root>
 ));

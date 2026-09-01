@@ -10,9 +10,9 @@
     "lint": "eslint . --max-warnings 0",
     "generate:component": "turbo gen react-component",
     "check-types": "tsc --noEmit",
-    "storybook": "storybook dev -p 6006 --no-open",
-    "build-storybook": "storybook build",
-    "test:storybook": "concurrently -k -s first -n \"SB,TEST\" \"storybook dev -p 6006 --ci --no-open\" \"wait-on tcp:6006 && test-storybook --maxWorkers=2\""
+    "storybook": "pnpm --filter @repo/tokens build && storybook dev -p 6006 --no-open",
+    "build-storybook": "pnpm --filter @repo/tokens build && storybook build",
+    "test:storybook": "pnpm --filter @repo/tokens build && concurrently -k -s first -n \"SB,TEST\" \"storybook dev -p 6006 --ci --no-open\" \"wait-on tcp:6006 && test-storybook --maxWorkers=2\""
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

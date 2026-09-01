@@ -42,6 +42,9 @@ export function Combobox({
   const [query, setQuery] = React.useState("");
   const [activeIndex, setActiveIndex] = React.useState(0);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const listboxRef = React.useRef<HTMLUListElement>(null);
+  const instanceId = React.useId();
+  const listboxId = `${instanceId}-listbox`;
 
   const selected = options.find((o) => o.value === value) ?? null;
   const filtered = React.useMemo(
@@ -67,10 +70,17 @@ export function Combobox({
     inputRef.current?.focus();
   };
 
+  // Keep the active option visible while navigating with the keyboard.
+  React.useEffect(() => {
+    if (!open) return;
+    const active = listboxRef.current?.querySelector('[data-active="true"]');
+    active?.scrollIntoView({ block: "nearest" });
+  }, [activeIndex, open]);
+
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (!open && (event.key === "ArrowDown" || event.key === "ArrowUp")) {
       event.preventDefault();
-      setOpen(true);
+      handleOpenChange(true);
       return;
     }
     if (!open) return;
@@ -101,10 +111,12 @@ export function Combobox({
           id={id}
           role="combobox"
           aria-expanded={open}
-          aria-controls={open ? "yp-combobox-listbox" : undefined}
+          aria-controls={open ? listboxId : undefined}
           aria-autocomplete="list"
           aria-activedescendant={
-            open && filtered[activeIndex] ? `yp-combobox-opt-${filtered[activeIndex].value}` : undefined
+            open && filtered[activeIndex]
+              ? `${instanceId}-opt-${filtered[activeIndex].value}`
+              : undefined
           }
           value={open ? query : (selected?.label ?? "")}
           placeholder={placeholder}
@@ -112,9 +124,12 @@ export function Combobox({
           onChange={(e) => {
             setQuery(e.target.value);
             setActiveIndex(0);
+            if (!open) setOpen(true);
+          }}
+          onClick={() => {
+            if (!open) handleOpenChange(true);
           }}
           onKeyDown={handleKeyDown}
-          onFocus={() => setOpen(true)}
           {...aria}
         />
         <ChevronDownIcon
@@ -129,7 +144,8 @@ export function Combobox({
           onCloseAutoFocus={(e) => e.preventDefault()}
         >
           <ul
-            id="yp-combobox-listbox"
+            ref={listboxRef}
+            id={listboxId}
             role="listbox"
             aria-label={aria["aria-label"]}
             className="z-dropdown max-h-72 w-[var(--radix-popover-trigger-width)] overflow-auto rounded-md border border-border bg-raised p-1 shadow-overlay"
@@ -141,12 +157,14 @@ export function Combobox({
             )}
             {filtered.map((option, index) => {
               const isSelected = option.value === value;
+              const isActive = index === activeIndex;
               return (
                 <li
                   key={option.value}
-                  id={`yp-combobox-opt-${option.value}`}
+                  id={`${instanceId}-opt-${option.value}`}
                   role="option"
                   aria-selected={isSelected}
+                  data-active={isActive || undefined}
                   onMouseDown={(e) => {
                     e.preventDefault();
                     select(option);
@@ -154,7 +172,7 @@ export function Combobox({
                   onMouseMove={() => setActiveIndex(index)}
                   className={cn(
                     "flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-2 text-sm outline-none",
-                    index === activeIndex && "bg-hover",
+                    isActive && "bg-hover",
                     isSelected && "font-medium",
                   )}
                 >

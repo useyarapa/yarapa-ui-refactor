@@ -19,14 +19,15 @@ function kebab(s) {
   return s.replace(/([a-z0-9])([A-Z])/g, "$1-$2").replace(/\s+/g, "-").toLowerCase();
 }
 
-function flatten(obj, prefix, out) {
+function flatten(obj, prefix, out, inheritedType) {
+  const type = obj.$type ?? inheritedType;
   for (const [key, value] of Object.entries(obj)) {
     if (key.startsWith("$")) continue;
     const name = prefix ? `${prefix}.${key}` : key;
     if (value && typeof value === "object" && "$value" in value) {
-      out[name] = value;
+      out[name] = { $type: value.$type ?? type, $value: value.$value };
     } else if (value && typeof value === "object") {
-      flatten(value, name, out);
+      flatten(value, name, out, type);
     }
   }
   return out;
@@ -49,7 +50,7 @@ function substitute(value, lookup, stack) {
   });
 }
 
-const primitiveTokens = flatten(primitives, "", {});
+const primitiveTokens = flatten(primitives, "", {}, undefined);
 const primitiveLookup = primitiveTokens;
 
 // Primitive tokens emit as --yp-<domain>-<...>
@@ -75,7 +76,7 @@ const resolved = {};
 
 for (const theme of THEMES) {
   const semantic = JSON.parse(readFileSync(join(src, theme.file), "utf8"));
-  const tokens = flatten(semantic, "", {});
+  const tokens = flatten(semantic, "", {}, undefined);
   const lookup = { ...primitiveLookup, ...tokens };
   const lines = [``, `/* Semantic tokens — ${theme.name} */`];
   const themeResolved = {};
@@ -88,11 +89,13 @@ for (const theme of THEMES) {
   cssChunks.push(`${theme.selector} {\n${lines.join("\n")}\n}`);
 }
 
-// High-contrast inherits everything from light except its overrides; enforce that cascade.
+// Forced-colors mode: keep structure legible, let the UA remap colors.
+// Applied on themed roots too so subtree theming cannot override the
+// system-color protections.
 cssChunks.push(
   `/* Users with reduced-motion get near-instant transitions regardless of theme. */`,
   `@media (prefers-reduced-motion: reduce) {`,
-  `  :root {`,
+  `  :root, [data-theme="dark"], [data-theme="high-contrast"] {`,
   `    --yp-motion-fast: 0ms;`,
   `    --yp-motion-base: 0ms;`,
   `    --yp-motion-slow: 0ms;`,
@@ -101,7 +104,7 @@ cssChunks.push(
   ``,
   `/* Forced-colors mode: keep structure legible, let the UA remap colors. */`,
   `@media (forced-colors: active) {`,
-  `  :root {`,
+  `  :root, [data-theme="dark"], [data-theme="high-contrast"] {`,
   `    --yp-color-border-default: CanvasText;`,
   `    --yp-color-border-strong: CanvasText;`,
   `    --yp-color-border-focus: Highlight;`,

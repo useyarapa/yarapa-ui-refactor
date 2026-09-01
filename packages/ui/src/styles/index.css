@@ -1,7 +1,9 @@
 /* Entry stylesheet for the YARAPA UI foundation.
    Import once in an app: `import "@repo/ui/styles.css"` */
 @import "@repo/tokens/css";
-@import "tailwindcss" source("../");
+/* Detection root is the repo root so classes used in consuming apps
+   (apps/web, apps/docs) and in this package all get generated. */
+@import "tailwindcss" source("../../../");
 
 /*
   Map semantic tokens (CSS variables from @repo/tokens) into Tailwind's theme.
@@ -116,6 +118,10 @@
 
 .animate-progress-indeterminate {
   animation: yp-progress-indeterminate 1.5s var(--yp-easing-standard) infinite;
+}
+
+[dir="rtl"] .animate-progress-indeterminate {
+  animation-direction: reverse;
 }
 
 /* Focus visibility contract: one consistent, unobscured ring everywhere. */

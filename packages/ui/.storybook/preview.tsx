@@ -3,7 +3,6 @@ import type { Decorator, Preview } from "@storybook/react-vite";
 import "../src/styles/index.css";
 import { TooltipProvider } from "../src/tooltip";
 import { ToastProvider, ToastViewport } from "../src/toast";
-
 const preview: Preview = {
   parameters: {
     layout: "centered",
@@ -48,6 +47,21 @@ const preview: Preview = {
     ((Story, context) => {
       const theme = (context.globals.theme as string) ?? "light";
       const dir = (context.globals.dir as string) ?? "ltr";
+
+      // Radix portals render under document.body, outside the decorator
+      // subtree — sync theme/direction onto the document element so
+      // overlays (dialog, menu, select, popover, tooltip) honor the
+      // selected theme and direction too.
+      React.useEffect(() => {
+        const root = document.documentElement;
+        root.setAttribute("data-theme", theme);
+        root.setAttribute("dir", dir);
+        return () => {
+          root.removeAttribute("data-theme");
+          root.removeAttribute("dir");
+        };
+      }, [theme, dir]);
+
       return (
         <div
           data-theme={theme}
