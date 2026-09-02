@@ -26,10 +26,12 @@ Guiding rule: do not invent Yarapa-specific conventions where an established web
 | Package | Role | Runtime deps | Build deps |
 | --- | --- | --- | --- |
 | `@yarapa-ui/tokens` | Design primitives: canonical token source; emits `dist/tokens.css` (base tokens) + `dist/themes/*.css` + `dist/tokens.json`. No component behavior. | none | — |
-| `@yarapa-ui/styles` | Framework-agnostic styling **contract**: compiled standalone BEM CSS + variant resolver functions + variant TypeScript types (`buttonVariants`, `ButtonVariants`, …). Tailwind is an internal authoring/build tool only. | variant resolver lib (CVA vs `tailwind-variants`, decided in slice — shared by all platform wrappers) | `@yarapa-ui/tokens` |
+| `@yarapa-ui/styles` | Framework-agnostic styling **contract**: compiled standalone BEM CSS + variant resolver functions + variant TypeScript types (`buttonVariants`, `ButtonVariants`, …). Tailwind is an internal authoring/build tool only. | variant resolver lib (CVA vs `tailwind-variants`, decided in slice — shared by **web** framework wrappers) | `@yarapa-ui/tokens` |
 | `@yarapa-ui/react` | Ergonomic React API. Uses native HTML where sufficient; Base UI primitives only where behavior/a11y/focus/positioning are required. Imports variant functions from styles — never reconstructs class strings. Owns no visual CSS and no state protocol. | `@yarapa-ui/styles`; `@base-ui/react` (package-level, see note); peers: `react`, `react-dom` | — |
 
 Future: `@yarapa-ui/vue`, `@yarapa-ui/native`. Do not create `core`/`utils`/`theme`/`icons` until a proven shared responsibility appears.
+
+Platform boundary: `@yarapa-ui/styles` is the **web** styling contract — `buttonVariants()` returns `yp-button yp-button--primary`, which is meaningless in React Native. Web wrappers (vue, astro) consume styles; native consumes `@yarapa-ui/tokens` + a native-specific implementation and is **never forced to depend on styles**.
 
 Dependency model — Base UI is a primitive dependency, not an architectural layer under every component:
 
@@ -185,7 +187,7 @@ CSS-resolution boundary (precise wording for docs):
 
 - No consumer Tailwind install or `@source` compilation.
 - No runtime token-package dependency (tokens are inlined at styles build).
-- React's forwarding stylesheet (`@import "@yarapa-ui/styles"`) uses **standard package CSS resolution** — any bundler that resolves package imports handles it. Plain-HTML users import `@yarapa-ui/styles` directly; no forwarding file involved. Do not copy CSS bytes into React just to claim "zero resolution".
+- React's forwarding stylesheet (`@import "@yarapa-ui/styles/css"`) uses an **explicit CSS subpath**, not package-root conditions — any bundler that resolves package imports handles it. Plain-HTML users import `@yarapa-ui/styles/css` directly; no forwarding file involved. Do not copy CSS bytes into React just to claim "zero resolution".
 
 Build-time flow, single hand-maintained token source:
 
@@ -206,29 +208,36 @@ packages/tokens/src/*.json               ← single hand-maintained source
 @yarapa-ui/styles/dist/*.js + *.d.ts     ← compiled variant contract
         │ react ships one forwarding file, no copied bytes
         ▼
-@yarapa-ui/react/styles.css = @import "@yarapa-ui/styles";
+@yarapa-ui/react/styles.css = @import "@yarapa-ui/styles/css";
 ```
 
 ### `@yarapa-ui/styles` exports map
 
-CSS:
+CSS and JS specifiers stay unambiguous: `.css` suffix means stylesheet, bare specifier means the variant contract. No magic at the package root.
 
 | Specifier | Content |
 | --- | --- |
-| `@yarapa-ui/styles` / `./index.css` | generated aggregate: base + themes + all components, one self-contained file |
+| `@yarapa-ui/styles/css` | generated aggregate: base + themes + all components, one self-contained file |
 | `@yarapa-ui/styles/tokens.css` | `--yp-*` base variables |
 | `@yarapa-ui/styles/themes/dark.css` | dark theme override block, optional |
 | `@yarapa-ui/styles/button.css`, `./dialog.css`, … | one file per component; requires token CSS loaded once |
 
-JS contract (framework-agnostic, same for future vue/native-web wrappers):
+JS contract (framework-agnostic across **web** wrappers — react/vue/astro; future native consumes tokens only):
 
 | Specifier | Content |
 | --- | --- |
 | `@yarapa-ui/styles/button` | `buttonVariants` resolver, `ButtonVariants` type |
 | `@yarapa-ui/styles/input` | `inputVariants`, `InputVariants` |
-| `@yarapa-ui/styles/select` | `selectVariants` (incl. `.trigger`/`.popup` part resolvers), `SelectVariants` |
+| `@yarapa-ui/styles/select` | `selectVariants` (per-part resolvers, resolver choice pending slice), `SelectVariants` |
 
-Rule wording: **no duplicated hand-maintained token source.** Generated artifacts may legitimately contain overlapping `--yp-*` declarations because they exist for aggregation — e.g. a selective user imports `styles/tokens.css` + `styles/button.css`; the full user imports only `index.css`. The hand-authored JSON in `packages/tokens/src` is the only place any value is written. Likewise the `*Variants` definitions are the only hand-maintained class contract; CSS and React both consume them.
+Rule wording: **no duplicated hand-maintained token source.** Generated artifacts may legitimately contain overlapping `--yp-*` declarations because they exist for aggregation — e.g. a selective user imports `styles/tokens.css` + `styles/button.css`; the full user imports only `styles/css`. The hand-authored JSON in `packages/tokens/src` is the only place any value is written.
+
+Resolver ↔ CSS relationship (honest wording — the two are hand-maintained separately, exactly as HeroUI v3 does with `button.styles.ts` + `button.css`):
+
+- The variant resolver is the canonical **prop → public-class mapping**.
+- Component CSS is the canonical **visual implementation** of those public classes.
+- React consumes the resolver and never reconstructs class names.
+- A class string therefore appears in both places (`"yp-button--primary"` in `buttonVariants`, `.yp-button--primary` in `button.css`). This is by design; consistency is **enforced by tests**, not by a generator. Do not build a bespoke codegen/manifest to eliminate the duplication — that would be the Yarapa-specific abstraction this spec exists to avoid.
 
 ### Cascade layers
 
@@ -268,6 +277,7 @@ No `!important` in library CSS. Themes = `[data-theme="dark"|"high-contrast"]` b
 - Storybook (react-vite) returns as the component harness in `packages/react`. Current official setup (test-runner is superseded): `@storybook/addon-vitest` + `@storybook/addon-a11y`, with `play()` interaction tests and browser/a11y tests run through the Vitest integration; `parameters.a11y.test = "error"` stays the axe gate. Every migrated component gets stories. The Vite harness doubles as the Vite integration proof.
 - `fixtures/plain-html`: static HTML + `styles/dist/index.css` via `<link>`/relative import, Playwright asserts computed styles (e.g. `.yp-button--primary` background = accent token). Proves framework-free usage.
 - `apps/docs` (Next.js 16, rebuilt): consumer app, build must pass = Next.js integration proof.
+- Resolver ↔ CSS consistency tests in `@yarapa-ui/styles` (replaces a codegen generator): every class emitted by `buttonVariants()` (all variant×size combinations) must exist as a selector in `button.css`; every documented public variant/size must be emitted by the resolver. A drift test, not a generation pipeline.
 - Package validation before publish: `publint` + `attw` on packed tarballs.
 
 ## Release
