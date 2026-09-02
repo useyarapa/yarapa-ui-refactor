@@ -11,28 +11,38 @@ concurrency:
 
 jobs:
   quality:
-    name: Lint, typecheck & build
+    name: Lint, typecheck, test, build, publish-readiness
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-
-      - uses: pnpm/action-setup@v4
-
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: pnpm
-
       - run: pnpm install --frozen-lockfile
+      # playwright is a package-level dep, so exec must be scoped to it
+      - run: pnpm --filter @yarapa-ui/react exec playwright install --with-deps chromium
+      - run: pnpm lint
+      - run: pnpm check-types
+      - run: pnpm build
+      - run: pnpm test
+      - run: pnpm publint
+      - run: pnpm attw
 
-      - name: Build design tokens
-        run: pnpm --filter @yarapa-ui/tokens build
-
-      - name: Lint
-        run: pnpm lint
-
-      - name: Typecheck
-        run: pnpm check-types
-
-      - name: Build
-        run: pnpm build
+  fixture:
+    name: Plain-html computed styles (framework-free)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @yarapa-ui/plain-html-fixture exec playwright install --with-deps chromium
+      - run: pnpm --filter @yarapa-ui/styles build
+      - run: pnpm --filter @yarapa-ui/plain-html-fixture test
+        env:
+          CI: true

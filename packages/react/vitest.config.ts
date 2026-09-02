@@ -3,8 +3,9 @@ import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
 import { playwright } from "@vitest/browser-playwright";
 import react from "@vitejs/plugin-react";
 
-// Playwright 1.62 ships no chromium build for macOS 13 (local dev box);
-// channel "chrome" runs the system Chrome — same browser family CI uses.
+// Playwright 1.62 ships no chromium build for macOS 13 (local dev box), so
+// outside CI we run the system Chrome. CI installs chromium explicitly.
+const launchOptions = process.env.CI ? {} : { channel: "chrome" as const };
 export default defineConfig({
   test: {
     projects: [
@@ -19,7 +20,7 @@ export default defineConfig({
           browser: {
             enabled: true,
             headless: true,
-            provider: playwright({ launchOptions: { channel: "chrome" } }),
+            provider: playwright({ launchOptions }),
             instances: [{ browser: "chromium" }],
           },
         },
