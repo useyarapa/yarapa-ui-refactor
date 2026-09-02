@@ -2,7 +2,7 @@
 
 Date: 2026-09-03
 Status: approved
-Scope: rename to `@yarapa-ui/*`, introduce `@yarapa-ui/styles`, migrate to Base UI, tsdown build, Changesets + npm Trusted Publishing, agent DX (llms.txt). First deliverable is a 3-component vertical slice, not a bulk rewrite.
+Scope: rename to `@yarapa-ui/*`, introduce `@yarapa-ui/styles` (CSS + variant contract), adopt Base UI selectively, tsdown build, Changesets + npm Trusted Publishing, agent DX (llms.txt). First deliverable is a 3-component vertical slice, not a bulk rewrite.
 
 ## Goal
 
@@ -19,31 +19,38 @@ import { Button } from "@yarapa-ui/react/button";
 
 Plain HTML/CSS consumers, Astro, and future Vue use the same CSS contract without React. Native (future) consumes tokens, not CSS.
 
-Guiding rule: do not invent Yarapa-specific conventions where an established web/React/CSS/Base UI convention exists. Precedent followed: HeroUI v3 (`@heroui/styles` BEM standalone CSS), Chakra UI (CSS variables, `llms.txt`/MCP), daisyUI (framework-agnostic semantic classes), Base UI (upstream state attributes). These are precedents, not universal mandates; each choice below is Yarapa's own decision backed by at least one precedent.
+Guiding rule: do not invent Yarapa-specific conventions where an established web/React/CSS/Base UI convention exists. Precedent followed: HeroUI v3 (`@heroui/styles` BEM CSS + exported `buttonVariants()` contract, React Aria primitives per component), Cloudflare Kumo (Base UI as selective dependency, standalone compiled CSS export alongside Tailwind entry), Chakra UI (CSS variables, `llms.txt`/MCP), daisyUI (framework-agnostic semantic classes), Base UI (upstream state attributes). These are precedents, not universal mandates; each choice below is Yarapa's own decision backed by at least one precedent.
 
 ## Packages
 
 | Package | Role | Runtime deps | Build deps |
 | --- | --- | --- | --- |
 | `@yarapa-ui/tokens` | Design primitives: canonical token source; emits `dist/tokens.css` (base tokens) + `dist/themes/*.css` + `dist/tokens.json`. No component behavior. | none | — |
-| `@yarapa-ui/styles` | Framework-agnostic visual CSS: BEM classes, themes, cascade layers, selective imports. Plain CSS source, no Tailwind requirement. | none (self-contained CSS) | `@yarapa-ui/tokens` |
-| `@yarapa-ui/react` | Ergonomic React API on Base UI. Maps props to BEM classes. Owns no visual CSS and no state protocol. | `@yarapa-ui/styles`, `@base-ui/react` | — |
+| `@yarapa-ui/styles` | Framework-agnostic styling **contract**: compiled BEM CSS + CVA variant functions + variant TypeScript types (`buttonVariants`, `ButtonVariants`, …). Tailwind is an internal authoring/build tool only. | `class-variance-authority` (CVA is peer of all platform wrappers) | `@yarapa-ui/tokens` |
+| `@yarapa-ui/react` | Ergonomic React API. Uses native HTML where sufficient; Base UI primitives only where behavior/a11y/focus/positioning are required. Imports variant functions from styles — never reconstructs class strings. Owns no visual CSS and no state protocol. | `@yarapa-ui/styles`; `@base-ui/react` only if some component truly imports it (Button may not) | — |
 
 Future: `@yarapa-ui/vue`, `@yarapa-ui/native`. Do not create `core`/`utils`/`theme`/`icons` until a proven shared responsibility appears.
 
-Dependency model (source/build vs published runtime):
+Dependency model — Base UI is a primitive dependency, not an architectural layer under every component:
 
 ```text
 SOURCE / BUILD
-@yarapa-ui/tokens  ──build──▶  @yarapa-ui/styles  ──▶  @yarapa-ui/react
+@yarapa-ui/tokens  ──build──▶  @yarapa-ui/styles
+                                (CSS + variant contract)
+                                      │
+                                      ▼
+                               @yarapa-ui/react
+                                /            \
+                       native HTML        Base UI
+                       when enough        when behavior needed
 
 PUBLISHED RUNTIME
 @yarapa-ui/react
- ├── @yarapa-ui/styles      (only runtime npm dep of styles)
- └── @base-ui/react         (official package name; imports like @base-ui/react/button)
+ ├── @yarapa-ui/styles        (CSS + CVA variants)
+ └── @base-ui/react           (where imported)
 ```
 
-`@yarapa-ui/styles/dist/index.css` already inlines tokens, and selective CSS uses `@yarapa-ui/styles/tokens.css` — so styles does not runtime-depend on `@yarapa-ui/tokens`. `pnpm add @yarapa-ui/react` installs react + styles + Base UI only. No package is installed that runtime never uses.
+`@yarapa-ui/styles/dist/index.css` already inlines tokens, and selective CSS uses `@yarapa-ui/styles/tokens.css` — so styles does not runtime-depend on `@yarapa-ui/tokens`. `pnpm add @yarapa-ui/react` installs react + styles (+ CVA + Base UI where used). No package is installed that runtime never uses.
 
 ### Plain-HTML boundary (precise wording for docs)
 
@@ -65,45 +72,82 @@ PUBLISHED RUNTIME
 ```
 
 - Visual variants/sizes are BEM modifier classes chosen from React props. No `data-variant`, no `data-size`.
-- Behavior/state attributes come from Base UI, used exactly as documented per primitive (e.g. Switch `[data-checked]`/`[data-unchecked]`, open/close animation `[data-open]`/`[data-closed]`/`[data-starting-style]`/`[data-ending-style]`). No translation layer (`data-yp-open`, custom `data-state`, `data-slot`), no duplication.
+- Where a component uses a Base UI primitive, its documented state attributes are used exactly as upstream emits them (e.g. Switch `[data-checked]`/`[data-unchecked]`, open/close animation `[data-open]`/`[data-closed]`/`[data-starting-style]`/`[data-ending-style]`), styled from `@yarapa-ui/styles`. No translation layer (`data-yp-open`, custom `data-state`, `data-slot`), no duplication. Components that don't need a primitive use native HTML state (`:disabled`, `:focus-visible`) — no invented state attributes either.
 - Native HTML/ARIA stays native: `disabled`, `aria-busy`, `aria-expanded`. Form validity: prefer Base UI Field/Input documented state attributes (`[data-invalid]`, `[data-valid]`, `[data-disabled]`, `[data-dirty]`, `[data-touched]`, `[data-focused]`); do not manually reproduce a state attribute Base UI already exposes.
-- `loading` (Base UI guidance: keep focus in tab order while disabled):
-
-```tsx
-<BaseButton
-  disabled={disabled || loading}
-  focusableWhenDisabled={loading}
-  aria-busy={loading || undefined}
->
-  {loading && <Spinner className="yp-button__spinner" />}
-  {children}
-</BaseButton>
-```
-
-  No `data-loading`.
+- `loading`: spinner child (`.yp-button__spinner`) + `disabled` + `aria-busy`. If focus retention while disabled is required, use Base UI Button `focusableWhenDisabled` (Base UI guidance); if Button stays native `<button>`, standard browser focus behavior applies. The Button slice decides. No `data-loading`.
 
 - React anatomy: where Base UI exposes an anatomy (Root/Trigger/Portal/Popup…), keep upstream names; do not rename to Yarapa vocabulary.
 
-### React → class mapping
+### Variant contract lives in `@yarapa-ui/styles` (CVA)
 
-```tsx
-<BaseButton
-  className={cn(
-    "yp-button",
-    `yp-button--${variant}`,
-    `yp-button--${size}`,
-    className,
-  )}
->
+Class names and variant types are owned by styles via `class-variance-authority` (CVA officially supports BEM and is Tailwind-optional). React imports the resolver — it never builds `yp-button--${variant}` strings itself:
+
+```ts
+// @yarapa-ui/styles/button.ts
+import { cva, type VariantProps } from "class-variance-authority";
+
+export const buttonVariants = cva("yp-button", {
+  variants: {
+    variant: {
+      primary: "yp-button--primary",
+      secondary: "yp-button--secondary",
+      outline: "yp-button--outline",
+      ghost: "yp-button--ghost",
+    },
+    size: {
+      sm: "yp-button--sm",
+      md: "yp-button--md",
+      lg: "yp-button--lg",
+    },
+  },
+  defaultVariants: { variant: "primary", size: "md" },
+});
+export type ButtonVariants = VariantProps<typeof buttonVariants>;
 ```
 
-`cn()` = `clsx` only (drop `tailwind-merge`; Tailwind is no longer in the contract).
+React consumes it (native element when sufficient):
+
+```tsx
+import { buttonVariants, type ButtonVariants } from "@yarapa-ui/styles/button";
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    ButtonVariants {
+  loading?: boolean;
+}
+
+export function Button({ variant, size, className, ...props }: ButtonProps) {
+  return <button className={buttonVariants({ variant, size, className })} {...props} />;
+}
+```
+
+Compound/Base UI components resolve per part:
+
+```tsx
+<SelectPrimitive.Trigger className={selectVariants.trigger({ size })} />
+```
+
+`cn()` = `clsx` (CVA composes class lists; `tailwind-merge` is dropped — no Tailwind in the consumer contract).
 
 ## CSS delivery
 
-Consumer must NOT need: Tailwind installed, `@source` config, or compiling `@yarapa-ui/react` TSX from node_modules. No Tailwind preflight may leak into consumers.
+Tailwind is an internal authoring/build tool of `@yarapa-ui/styles` (precedent: Kumo ships compiled standalone CSS while building with Tailwind internally). The Button/Input/Select slice must prove that internal Tailwind authoring + standalone CSS compilation preserves the legacy styles before migrating the rest — no hand-rewriting ~30 components to raw CSS unless the slice shows it fails.
 
-Build-time flow, single source of truth, zero runtime package-CSS resolution:
+Consumers get compiled, self-contained CSS:
+
+```text
+AUTHORING (internal only)
+Tailwind utilities/@apply + plain CSS in packages/styles/src
+        │ build: Tailwind v4 compile scoped to styles source,
+        │        output namespaced under .yp-* rules — no preflight leak
+        ▼
+PUBLISHED
+@yarapa-ui/styles CSS artifacts (below)
+        ▼
+consumer: NO Tailwind install, NO @source, NO node_modules TSX compilation
+```
+
+Build-time flow, single hand-maintained token source, zero runtime package-CSS resolution:
 
 ```text
 packages/tokens/src/*.json               ← single hand-maintained source
@@ -119,12 +163,15 @@ packages/tokens/src/*.json               ← single hand-maintained source
 @yarapa-ui/styles/dist/tokens.css        ← generated base-token artifact
 @yarapa-ui/styles/dist/themes/dark.css   ← generated theme artifact
 @yarapa-ui/styles/dist/button.css        ← selective; assumes token CSS loaded once
+@yarapa-ui/styles/dist/*.js + *.d.ts     ← compiled CVA variant contracts
         │ react ships one forwarding file, no copied bytes
         ▼
 @yarapa-ui/react/styles.css = @import "@yarapa-ui/styles";
 ```
 
 ### `@yarapa-ui/styles` exports map
+
+CSS:
 
 | Specifier | Content |
 | --- | --- |
@@ -133,7 +180,15 @@ packages/tokens/src/*.json               ← single hand-maintained source
 | `@yarapa-ui/styles/themes/dark.css` | dark theme override block, optional |
 | `@yarapa-ui/styles/button.css`, `./dialog.css`, … | one file per component; requires token CSS loaded once |
 
-Rule wording: **no duplicated hand-maintained token source.** Generated artifacts may legitimately contain overlapping `--yp-*` declarations because they exist for aggregation — e.g. a selective user imports `styles/tokens.css` + `styles/button.css`; the full user imports only `index.css`. The hand-authored JSON in `packages/tokens/src` is the only place any value is written.
+JS contract (framework-agnostic, same for future vue/native-web wrappers):
+
+| Specifier | Content |
+| --- | --- |
+| `@yarapa-ui/styles/button` | `buttonVariants` (CVA), `ButtonVariants` type |
+| `@yarapa-ui/styles/input` | `inputVariants`, `InputVariants` |
+| `@yarapa-ui/styles/select` | `selectVariants` (incl. `.trigger`/`.popup` part resolvers), `SelectVariants` |
+
+Rule wording: **no duplicated hand-maintained token source.** Generated artifacts may legitimately contain overlapping `--yp-*` declarations because they exist for aggregation — e.g. a selective user imports `styles/tokens.css` + `styles/button.css`; the full user imports only `index.css`. The hand-authored JSON in `packages/tokens/src` is the only place any value is written. Likewise the `*Variants` definitions are the only hand-maintained class contract; CSS and React both consume them.
 
 ### Cascade layers
 
@@ -161,15 +216,18 @@ No `!important` in library CSS. Themes = `[data-theme="dark"|"high-contrast"]` b
 ```
 
 - `@yarapa-ui/tokens`: keep `build.mjs`, rename package; extend emit to base-only `dist/tokens.css` + per-theme `dist/themes/{dark,high-contrast}.css` + `dist/tokens.json`, `publishConfig` added.
-- Base UI import: `@base-ui/react` (official current name; per-component subpath imports like `@base-ui/react/button`, `@base-ui/react/select`).
-- `@yarapa-ui/styles`: plain CSS authored in `src/`, build = token-inline + bundle per-component files + `dist/index.css`.
-- Legacy `packages/ui` (`@repo/ui`, 33 components, Radix + cva + Tailwind, raw-TSX exports): stays private/unpublished during migration; components move one at a time into the new architecture. When the last component migrates, `packages/ui` is deleted and Tailwind drops out of the react package.
+- Base UI import: `@base-ui/react` (official current name; per-primitive subpath imports like `@base-ui/react/select`), **used per component only when behavior is needed**, not as a universal wrapper layer.
+- `@yarapa-ui/styles`: two build outputs —
+  - CSS: Tailwind-assisted authored CSS in `src/`, compiled to standalone per-component CSS + aggregated `dist/index.css` with token inline; no preflight in output.
+  - JS: tsdown compiles CVA variant modules to ESM + `.d.ts` (`dist/button.js` etc.).
+- `@yarapa-ui/react`: tsdown as above; imports `@base-ui/react/*` only in components that need a primitive.
+- Legacy components (the removed `packages/ui` prototypes) are reference material from git history during migration, not a compatibility constraint.
 
 ## Testing / quality gates
 
-- Storybook (react-vite) stays the component harness: every migrated component gets stories; axe a11y (`a11y: { test: "error" }`) + `play()` interaction tests via `@storybook/test-runner`. The Vite harness doubles as the Vite integration proof.
+- Storybook (react-vite) returns as the component harness in `packages/react`: every migrated component gets stories; axe a11y (`a11y: { test: "error" }`) + `play()` interaction tests via `@storybook/test-runner`. The Vite harness doubles as the Vite integration proof.
 - `fixtures/plain-html`: static HTML + `styles/dist/index.css` via `<link>`/relative import, Playwright asserts computed styles (e.g. `.yp-button--primary` background = accent token). Proves framework-free usage.
-- `apps/docs` (Next.js 16): consumer app, build must pass = Next.js integration proof.
+- `apps/docs` (Next.js 16, rebuilt): consumer app, build must pass = Next.js integration proof.
 - Package validation before publish: `publint` + `attw` on packed tarballs.
 
 ## Release
@@ -197,13 +255,15 @@ Docs are a first-class product output; never assume models know Yarapa UI from t
 
 Do not rewrite 33 components at once. Prove the whole contract on three, in this order:
 
-1. **Button** — static/simple, variant+size BEM mapping, `loading` spinner pattern.
-2. **Input** — form state via Base UI Field/Input documented attributes (`[data-disabled]`, `[data-invalid]`, `[data-focused]`, …), focus styling on those hooks.
-3. **Select** — compound Base UI component: portal, positioning, overlay, open/close animation attributes, keyboard/a11y. (Chosen over Dialog: Base UI Select exercises more of the state contract surface in one component.)
+1. **Button** — tests the native-HTML path: `<button>` + `buttonVariants` (CVA in styles) + `loading` spinner pattern. Decide here whether Base UI `Button` (`focusableWhenDisabled`) is needed or native suffices; requirement-driven, not architecture-driven.
+2. **Input** — tests Base UI Field/Input state attributes (`[data-disabled]`, `[data-invalid]`, `[data-focused]`, …) styled from `@yarapa-ui/styles`.
+3. **Select** — tests the compound Base UI path: portal, positioning, overlay, open/close animation attributes, keyboard/a11y, per-part variant resolvers (`selectVariants.trigger`, `.popup`). (Chosen over Dialog: Base UI Select exercises more of the state contract surface in one component.)
+
+Together the slice proves all three paths: styles-only (BEM CSS), CVA contract (props→classes, single source), primitive-selective (Base UI where behavior is required) — plus whether internal Tailwind authoring compiles to standalone CSS that preserves the legacy look (the bulk-migration cost question).
 
 Slice is done when all pass:
 
-- class contract stable (`yp-button--*`, Base UI attrs untouched)
+- class contract stable (`yp-button--*` defined once in styles CVA; Base UI attrs untouched)
 - plain-html fixture green (computed-style assertions)
 - Next.js (`apps/docs`) + Vite (Storybook) builds green
 - tokens defined in exactly one place
@@ -216,13 +276,14 @@ Implementation-plan scope: repo restructure (renames, new `packages/styles`, bui
 
 ## Conventionality rules (freeze list)
 
-1. Base UI = authoritative behavior, a11y, keyboard/focus, documented state attributes, documented dynamic CSS variables. Never translate or duplicate.
-2. React props stay ergonomic (`variant`, `size`, `disabled`, `loading`); compound APIs follow upstream anatomy names.
-3. Visual variants/sizes = BEM modifier classes (precedent: HeroUI v3), not data attributes.
-4. Tokens = CSS custom properties `--yp-*` + JSON; single canonical source.
-5. Styles = plain authored CSS, framework-agnostic visual layer, full + selective exports, cascade layers, no consumer Tailwind.
-6. Avoid: custom state protocols, `data-slot`, `data-variant`/`data-size`, generated public class names, proprietary styling DSL, `!important` override strategy, custom abstractions where browser/React/Base UI already provide one.
-7. No new packages beyond tokens/styles/react until a proven shared responsibility appears.
+1. Base UI = authoritative behavior/a11y/state attributes **where a component uses it**. It is a headless primitive dependency, not a layer under every component: simple components may use native HTML; complex interactive ones (Select, Popover, Dialog, Tabs, Tooltip, Combobox) use Base UI where it provides value.
+2. Never translate or duplicate Base UI state attributes; never invent state where native HTML already provides it (`:disabled`, `:focus-visible`).
+3. React props stay ergonomic (`variant`, `size`, `disabled`, `loading`); compound APIs follow upstream anatomy names.
+4. Visual variants/sizes = BEM modifier classes from the **styles package's CVA contract** (precedent: HeroUI v3 `buttonVariants` in `@heroui/styles`), not data attributes. React never reconstructs class strings.
+5. Tokens = CSS custom properties `--yp-*` + JSON; single canonical source.
+6. Styles = framework-agnostic contract package: compiled CSS + CVA variant functions + variant types; full + selective exports; cascade layers; consumer Tailwind not required (Tailwind internal authoring allowed, Kumo precedent).
+7. Avoid: custom state protocols, `data-slot`, `data-variant`/`data-size`, custom variant resolvers when CVA exists, generated public class names, proprietary styling DSL, `!important` override strategy, custom abstractions where browser/React/Base UI already provide one.
+8. No new packages beyond tokens/styles/react until a proven shared responsibility appears.
 
 ## Prerequisites / open items
 
