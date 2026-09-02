@@ -13,7 +13,7 @@ The architecture, package contracts, and release pipeline are specified in
 
 ## Current state
 
-`packages/tokens` is live; the `@yarapa-ui/*` packages are being built per the spec. The legacy `packages/ui` / `apps/docs` prototypes were removed during the rename — the rebuild replaces them under the new architecture.
+`@yarapa-ui/tokens` is live (base + per-theme CSS + JSON); the remaining `@yarapa-ui/*` packages are being built per the spec. The legacy `packages/ui` / `apps/docs` prototypes were removed during the rename — the rebuild replaces them under the new architecture.
 
 ## Commands
 

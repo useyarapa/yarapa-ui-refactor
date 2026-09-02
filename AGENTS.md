@@ -4,7 +4,7 @@ pnpm + Turbo monorepo building the `@yarapa-ui/*` open-source UI ecosystem. Targ
 
 ## Current state
 
-- `packages/tokens` — DTCG-style token source + builder (still named `@repo/tokens`; renames to `@yarapa-ui/tokens` happen in the migration).
+- `packages/tokens` — DTCG-style token source + builder, published shape as `@yarapa-ui/tokens` — base + per-theme CSS artifacts + JSON.
 - `packages/eslint-config`, `packages/typescript-config` — shared flat configs (`@repo/eslint-config/base`, `/next-js`, `/react-internal`).
 - Legacy `packages/ui`, `apps/docs`, and the Storybook/Playwright CI job were removed — do not resurrect them; rebuild fresh under the spec.
 
@@ -20,7 +20,7 @@ pnpm build                # all packages (turbo run build)
 pnpm lint                 # eslint across workspaces, --max-warnings 0
 pnpm check-types          # tsc --noEmit across workspaces
 
-pnpm --filter @repo/tokens build        # regenerate dist/tokens.css (dist is gitignored)
+pnpm --filter @yarapa-ui/tokens build   # regenerate dist/tokens.css + themes/ (dist is gitignored)
 ```
 
 Run one package's task with `pnpm --filter <pkg> <script>`.
@@ -31,9 +31,7 @@ Husky `commit-msg` hook runs commitlint (conventional commits) with strict rules
 
 ## Token pipeline (source of truth: `packages/tokens/src`)
 
-DTCG-style JSON: `primitives.json` (raw scale) + `semantic.{light,dark,high-contrast}.json` (reference primitives via `{alias}` syntax). `build.mjs` flattens, resolves aliases, and emits `dist/tokens.css` as CSS custom properties (`--yp-*`), one theme block per selector: `:root` (light), `[data-theme="dark"]`, `[data-theme="high-contrast"]`. Theme switching is runtime attribute-based, not build-time.
-
-The spec extends this to base-only `tokens.css` + per-theme `themes/{dark,high-contrast}.css` + `tokens.json` as `@yarapa-ui/tokens`.
+DTCG-style JSON: `primitives.json` (raw scale) + `semantic.{light,dark,high-contrast}.json` (reference primitives via `{alias}` syntax). `build.mjs` flattens, resolves aliases, and emits as CSS custom properties (`--yp-*`): base-only `dist/tokens.css` (`:root` primitives + `[data-theme]`-less light block + reduced-motion/forced-colors guards), per-theme overrides in `dist/themes/{dark,high-contrast}.css`, and the resolved value map in `dist/tokens.json`. Theme switching is runtime attribute-based, not build-time.
 
 ## Architecture rules that bind all new code
 

@@ -1,14 +1,24 @@
 {
-  "name": "@repo/tokens",
+  "name": "@yarapa-ui/tokens",
   "version": "0.0.0",
-  "private": true,
+  "description": "Canonical design tokens for Yarapa UI (DTCG-style source -> CSS custom properties + JSON).",
+  "license": "MIT",
   "type": "module",
   "exports": {
-    "./css": "./dist/tokens.css",
-    "./tokens.json": "./dist/tokens.json"
+    "./tokens.css": "./dist/tokens.css",
+    "./themes/dark.css": "./dist/themes/dark.css",
+    "./themes/high-contrast.css": "./dist/themes/high-contrast.css",
+    "./tokens.json": "./dist/tokens.json",
+    "./package.json": "./package.json"
+  },
+  "files": ["dist"],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   },
   "scripts": {
     "build": "node build.mjs",
-    "dev": "node --watch build.mjs"
+    "dev": "node --watch build.mjs",
+    "test": "node --test \"tests/*.test.mjs\""
   }
 }
