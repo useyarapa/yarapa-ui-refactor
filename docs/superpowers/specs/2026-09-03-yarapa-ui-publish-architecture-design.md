@@ -27,7 +27,7 @@ Guiding rule: do not invent Yarapa-specific conventions where an established web
 | --- | --- | --- | --- |
 | `@yarapa-ui/tokens` | Design primitives: canonical token source; emits `dist/tokens.css` (base tokens) + `dist/themes/*.css` + `dist/tokens.json`. No component behavior. | none | — |
 | `@yarapa-ui/styles` | Framework-agnostic styling **contract**: compiled standalone BEM CSS + variant resolver functions + variant TypeScript types (`buttonVariants`, `ButtonVariants`, …). Tailwind is an internal authoring/build tool only. | variant resolver lib (CVA vs `tailwind-variants`, decided in slice — shared by all platform wrappers) | `@yarapa-ui/tokens` |
-| `@yarapa-ui/react` | Ergonomic React API. Uses native HTML where sufficient; Base UI primitives only where behavior/a11y/focus/positioning are required. Imports variant functions from styles — never reconstructs class strings. Owns no visual CSS and no state protocol. | `@yarapa-ui/styles`; `@base-ui/react` only if some component truly imports it (Button may not) | — |
+| `@yarapa-ui/react` | Ergonomic React API. Uses native HTML where sufficient; Base UI primitives only where behavior/a11y/focus/positioning are required. Imports variant functions from styles — never reconstructs class strings. Owns no visual CSS and no state protocol. | `@yarapa-ui/styles`; `@base-ui/react` (package-level, see note); peers: `react`, `react-dom` | — |
 
 Future: `@yarapa-ui/vue`, `@yarapa-ui/native`. Do not create `core`/`utils`/`theme`/`icons` until a proven shared responsibility appears.
 
@@ -47,10 +47,15 @@ SOURCE / BUILD
 PUBLISHED RUNTIME
 @yarapa-ui/react
  ├── @yarapa-ui/styles        (CSS + variant contract)
- └── @base-ui/react           (where imported)
+ ├── @base-ui/react           (package-level dep)
+ └── peers: react, react-dom
 ```
 
-`@yarapa-ui/styles/dist/index.css` already inlines tokens, and selective CSS uses `@yarapa-ui/styles/tokens.css` — so styles does not runtime-depend on `@yarapa-ui/tokens`. `pnpm add @yarapa-ui/react` installs react + styles (+ variant resolver lib + Base UI where used). No package is installed that runtime never uses.
+`@base-ui/react` is a **package-level runtime dependency** once the first Base UI-backed component ships — declared for the whole package, not per component. A consumer importing only `Button` still installs Base UI, but the bundler tree-shakes unused components/primitives from the bundle (Base UI ships one tree-shakable package). Selective means "used in source where needed", not "absent from package.json".
+
+`@yarapa-ui/react` also declares `react`/`react-dom` as **peerDependencies** (Base UI's own supported range is React ^17 || ^18 || ^19 — the plan verifies the current ranges before pinning).
+
+`@yarapa-ui/styles/dist/index.css` already inlines tokens, and selective CSS uses `@yarapa-ui/styles/tokens.css` — so styles does not runtime-depend on `@yarapa-ui/tokens`. `pnpm add @yarapa-ui/react` installs react + styles + resolver lib + Base UI (tree-shaken as unused). No package is installed that runtime never uses.
 
 ### Plain-HTML boundary (precise wording for docs)
 
@@ -129,6 +134,35 @@ Compound/Base UI components resolve per part:
 
 `cn()` = `clsx` (the resolver composes class lists; `tailwind-merge` is dropped — no Tailwind in the consumer contract).
 
+### Hard boundary: Tailwind authoring vs public BEM contract
+
+The resolver must return **only semantic public classes** — never Tailwind utilities. If `buttonVariants()` ever returns `inline-flex px-3 ...`, Tailwind utilities silently become the public DOM contract again. The layering is absolute:
+
+```text
+Tailwind utilities / @apply      ← internal authoring only (inside .yp-* rules)
+        ↓ compiled
+.yp-button, .yp-button--primary  ← public CSS contract
+        ↓ referenced by
+buttonVariants()                 ← returns BEM classes ONLY
+        ↓
+React / Vue / plain HTML         ← never sees Tailwind as API
+```
+
+```css
+/* internal authoring — packages/styles/src/button.css */
+.yp-button { @apply inline-flex items-center justify-center; }
+.yp-button--primary { @apply bg-primary text-primary-foreground; }
+```
+
+### Resolver choice: Select is the decider
+
+Button and Input work under both CVA and `tailwind-variants`; the multipart component breaks the tie:
+
+- **`tailwind-variants`** has an official `slots` API returning typed per-part resolvers directly — no hand-rolled abstraction — but is Tailwind-first and defaults to `tailwind-merge` conflict resolution (`tailwind-variants/lite` exists if merging is unwanted; merging may conflict with our "drop tailwind-merge" rule).
+- **CVA** requires hand-rolling `selectVariants.trigger` / `.popup` part objects — risk: that becomes the Yarapa-specific resolver abstraction we are trying to avoid.
+
+The Select slice must compare both against these criteria before freeze: typed slots out-of-the-box vs custom layer; Tailwind-merge default behavior vs class-purity boundary; bundle/dep weight.
+
 ## CSS delivery
 
 Tailwind is an internal authoring/build tool of `@yarapa-ui/styles` (precedent: Kumo ships compiled standalone CSS while building with Tailwind internally). The Button/Input/Select slice must prove that internal Tailwind authoring + standalone CSS compilation preserves the legacy styles before migrating the rest — no hand-rewriting ~30 components to raw CSS unless the slice shows it fails.
@@ -147,7 +181,13 @@ PUBLISHED
 consumer: NO Tailwind install, NO @source, NO node_modules TSX compilation
 ```
 
-Build-time flow, single hand-maintained token source, zero runtime package-CSS resolution:
+CSS-resolution boundary (precise wording for docs):
+
+- No consumer Tailwind install or `@source` compilation.
+- No runtime token-package dependency (tokens are inlined at styles build).
+- React's forwarding stylesheet (`@import "@yarapa-ui/styles"`) uses **standard package CSS resolution** — any bundler that resolves package imports handles it. Plain-HTML users import `@yarapa-ui/styles` directly; no forwarding file involved. Do not copy CSS bytes into React just to claim "zero resolution".
+
+Build-time flow, single hand-maintained token source:
 
 ```text
 packages/tokens/src/*.json               ← single hand-maintained source
@@ -225,7 +265,7 @@ No `!important` in library CSS. Themes = `[data-theme="dark"|"high-contrast"]` b
 
 ## Testing / quality gates
 
-- Storybook (react-vite) returns as the component harness in `packages/react`: every migrated component gets stories; axe a11y (`a11y: { test: "error" }`) + `play()` interaction tests via `@storybook/test-runner`. The Vite harness doubles as the Vite integration proof.
+- Storybook (react-vite) returns as the component harness in `packages/react`. Current official setup (test-runner is superseded): `@storybook/addon-vitest` + `@storybook/addon-a11y`, with `play()` interaction tests and browser/a11y tests run through the Vitest integration; `parameters.a11y.test = "error"` stays the axe gate. Every migrated component gets stories. The Vite harness doubles as the Vite integration proof.
 - `fixtures/plain-html`: static HTML + `styles/dist/index.css` via `<link>`/relative import, Playwright asserts computed styles (e.g. `.yp-button--primary` background = accent token). Proves framework-free usage.
 - `apps/docs` (Next.js 16, rebuilt): consumer app, build must pass = Next.js integration proof.
 - Package validation before publish: `publint` + `attw` on packed tarballs.
@@ -257,7 +297,7 @@ Do not rewrite 33 components at once. Prove the whole contract on three, in this
 
 1. **Button** — tests the native-HTML path: `<button>` + `buttonVariants` (owned by styles) + `loading` spinner pattern. Decide here whether Base UI `Button` (`focusableWhenDisabled`) is needed or native suffices; requirement-driven, not architecture-driven.
 2. **Input** — native `<input>` first; adopt Base UI Field/Input (and its `[data-disabled]`/`[data-invalid]`/`[data-focused]` attributes) only if a concrete form/validation behavior requirement justifies it. Either way, variant contract comes from styles.
-3. **Select** — tests the compound Base UI path: portal, positioning, overlay, open/close animation attributes, keyboard/a11y, per-part variant resolvers (`selectVariants.trigger`, `.popup`). (Chosen over Dialog: Base UI Select exercises more of the state contract surface in one component.)
+3. **Select** — tests the compound Base UI path: portal, positioning, overlay, open/close animation attributes, keyboard/a11y, per-part variant resolvers (`selectVariants.trigger`, `.popup`). Chosen over Dialog: Base UI Select exercises more of the state contract surface in one component — and it is the **CVA vs tailwind-variants decider** (multipart/slots is where the two differ; see "Resolver choice").
 
 Together the slice proves all three paths: styles-only (BEM CSS), variant contract (props→classes, single source), primitive-selective (Base UI where behavior is required) — plus whether internal Tailwind authoring compiles to standalone CSS that preserves the legacy look (the bulk-migration cost question).
 
@@ -301,7 +341,9 @@ Implementation-plan scope: repo restructure (renames, new `packages/styles`, bui
 5. Tokens = CSS custom properties `--yp-*` + JSON; single canonical source.
 6. Styles = framework-agnostic contract package: compiled CSS + variant resolver functions + variant types; full + selective exports; cascade layers; consumer Tailwind not required (Tailwind internal authoring allowed, Kumo precedent).
 7. Avoid: custom state protocols, `data-slot`, `data-variant`/`data-size`, custom variant resolvers when CVA/tailwind-variants exist, generated public class names, proprietary styling DSL, `!important` override strategy, custom abstractions where browser/React/Base UI already provide one.
-8. No new packages beyond tokens/styles/react until a proven shared responsibility appears.
+8. Resolver output = BEM classes only; Tailwind utilities never cross into the public DOM contract.
+9. `@base-ui/react` = package-level runtime dep (tree-shaken by bundlers); `react`/`react-dom` = peerDependencies of `@yarapa-ui/react`.
+10. No new packages beyond tokens/styles/react until a proven shared responsibility appears.
 
 ## Prerequisites / open items
 
