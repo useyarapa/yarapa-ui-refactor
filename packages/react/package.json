@@ -22,6 +22,9 @@
     "lint": "eslint . --max-warnings 0",
     "check-types": "tsc --noEmit",
     "test": "vitest run",
+    "test:storybook": "vitest run --project browser",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
     "publint": "publint",
     "attw": "attw --pack . --ignore-rules no-resolution cjs-resolves-to-esm"
   },
@@ -36,14 +39,22 @@
     "@arethetypeswrong/cli": "^0.18.5",
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@storybook/addon-a11y": "^10.6.0",
+    "@storybook/addon-vitest": "^10.6.0",
+    "@storybook/react-vite": "^10.6.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.1.1",
+    "@vitest/browser-playwright": "^4.1.11",
     "eslint": "10.9.1",
+    "playwright": "^1.62.1",
     "publint": "^0.3.24",
     "react": "^19",
     "react-dom": "^19",
+    "storybook": "^10.6.0",
     "tsdown": "^0.22.14",
     "typescript": "7.0.2",
+    "vite": "^8.2.2",
     "vitest": "^4.1.11"
   }
 }
