@@ -1,6 +1,7 @@
 packages:
   - "apps/*"
   - "packages/*"
+  - "fixtures/*"
 allowBuilds:
   '@parcel/watcher': true
   '@swc/core': true
