@@ -1,0 +1,49 @@
+{
+  "name": "@yarapa-ui/react",
+  "version": "0.0.0",
+  "description": "Accessible React components for Yarapa UI.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": ["*.css"],
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    "./button": { "types": "./dist/button.d.ts", "default": "./dist/button.js" },
+    "./styles.css": "./dist/styles.css",
+    "./package.json": "./package.json"
+  },
+  "files": ["dist"],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "scripts": {
+    "build": "tsdown && cp src/styles.css dist/styles.css",
+    "dev": "tsdown --watch",
+    "lint": "eslint . --max-warnings 0",
+    "check-types": "tsc --noEmit",
+    "test": "vitest run",
+    "publint": "publint",
+    "attw": "attw --pack . --ignore-rules no-resolution cjs-resolves-to-esm"
+  },
+  "dependencies": {
+    "@yarapa-ui/styles": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^19",
+    "react-dom": "^19"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "10.9.1",
+    "publint": "^0.3.24",
+    "react": "^19",
+    "react-dom": "^19",
+    "tsdown": "^0.22.14",
+    "typescript": "7.0.2",
+    "vitest": "^4.1.11"
+  }
+}

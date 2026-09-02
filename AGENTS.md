@@ -5,6 +5,7 @@ pnpm + Turbo monorepo building the `@yarapa-ui/*` open-source UI ecosystem. Targ
 ## Current state
 
 - `packages/tokens` — DTCG-style token source + builder, published shape as `@yarapa-ui/tokens` — base + per-theme CSS artifacts + JSON.
+- `packages/styles` — `@yarapa-ui/styles`: compiled BEM CSS (cascade-layered) + variant resolvers (Button contract live); `packages/react` — `@yarapa-ui/react`: native Button (no Base UI dependency yet) consuming the styles contract.
 - `packages/eslint-config`, `packages/typescript-config` — shared flat configs (`@repo/eslint-config/base`, `/next-js`, `/react-internal`).
 - Legacy `packages/ui`, `apps/docs`, and the Storybook/Playwright CI job were removed — do not resurrect them; rebuild fresh under the spec.
 
