@@ -1,27 +1,28 @@
 # YARAPA UI
 
-The YARAPA design-system foundation: semantic design tokens, accessible components built on Radix Primitives, and a Storybook-based quality pipeline.
+The YARAPA design-system foundation: semantic design tokens, a framework-agnostic visual CSS layer, and accessible React components built on Base UI — published as the `@yarapa-ui/*` ecosystem.
 
-See [`docs/ui-foundation.md`](docs/ui-foundation.md) for the architecture, token contract, theming, accessibility and performance governance (issue #1).
+The architecture, package contracts, and release pipeline are specified in
+[`docs/superpowers/specs/2026-09-03-yarapa-ui-publish-architecture-design.md`](docs/superpowers/specs/2026-09-03-yarapa-ui-publish-architecture-design.md).
 
-## Structure
+## Target packages
 
-- `packages/tokens` — DTCG-style token source of truth, built to CSS custom properties (light / dark / high-contrast + reduced-motion + forced-colors).
-- `packages/ui` (`@repo/ui`) — component library styled via Tailwind v4 mapped onto the semantic tokens.
-- `apps/web` — product app consuming `@repo/ui`.
-- `apps/docs` — documentation entry point.
+- `@yarapa-ui/tokens` — DTCG-style token source of truth, built to CSS custom properties (`--yp-*`) + JSON.
+- `@yarapa-ui/styles` — framework-agnostic visual CSS (BEM `yp-*` classes, themes, cascade layers).
+- `@yarapa-ui/react` — ergonomic React components on Base UI.
+
+## Current state
+
+`packages/tokens` is live; the `@yarapa-ui/*` packages are being built per the spec. The legacy `packages/ui` / `apps/docs` prototypes were removed during the rename — the rebuild replaces them under the new architecture.
 
 ## Commands
 
 ```sh
 pnpm install
-pnpm build                                   # tokens, apps
+pnpm build
 pnpm lint && pnpm check-types
-
-pnpm --filter @repo/ui storybook             # component workbench (theme + RTL toolbars)
-pnpm --filter @repo/ui test:storybook        # axe a11y + interaction tests
 ```
 
 ## CI
 
-`.github/workflows/ci.yml` runs tokens build → lint → typecheck → build, then builds Storybook and runs the test suite (accessibility + interaction) on every PR.
+`.github/workflows/ci.yml` runs tokens build → lint → typecheck → build on every PR. Storybook/a11y and release jobs return as the new packages land (see spec).
