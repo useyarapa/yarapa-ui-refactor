@@ -1,0 +1,48 @@
+{
+  "name": "@yarapa-ui/styles",
+  "version": "0.0.0",
+  "description": "Framework-agnostic styling contract for Yarapa UI: compiled BEM CSS + variant resolvers.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": ["*.css"],
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    "./button": { "types": "./dist/button.d.ts", "default": "./dist/button.js" },
+    "./css": "./dist/index.css",
+    "./tokens.css": "./dist/tokens.css",
+    "./themes/dark.css": "./dist/themes/dark.css",
+    "./themes/high-contrast.css": "./dist/themes/high-contrast.css",
+    "./button.css": "./dist/button.css",
+    "./package.json": "./package.json"
+  },
+  "files": ["dist"],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "scripts": {
+    "build": "tsdown && node build-css.mjs",
+    "dev": "node build-css.mjs && tsdown --watch",
+    "lint": "eslint . --max-warnings 0",
+    "check-types": "tsc --noEmit",
+    "test": "vitest run",
+    "publint": "publint",
+    "attw": "attw --pack . --ignore-rules no-resolution cjs-resolves-to-esm"
+  },
+  "dependencies": {
+    "class-variance-authority": "^0.7.1"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@tailwindcss/cli": "^4.3.3",
+    "@yarapa-ui/tokens": "workspace:*",
+    "eslint": "10.9.1",
+    "publint": "^0.3.24",
+    "tailwindcss": "^4.3.3",
+    "tsdown": "^0.22.14",
+    "typescript": "7.0.2",
+    "vitest": "^4.1.11"
+  }
+}

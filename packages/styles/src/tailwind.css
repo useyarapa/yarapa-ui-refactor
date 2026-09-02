@@ -1,0 +1,3 @@
+/* Tailwind reference for @apply. This file is NEVER an entry point —
+   component files pull utilities via @reference. */
+@import "tailwindcss";

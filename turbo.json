@@ -13,6 +13,17 @@
     "check-types": {
       "dependsOn": ["^check-types"]
     },
+    "test": {
+      "dependsOn": ["build", "^build"]
+    },
+    "publint": {
+      "dependsOn": ["build"],
+      "outputs": []
+    },
+    "attw": {
+      "dependsOn": ["build"],
+      "outputs": []
+    },
     "dev": {
       "cache": false,
       "persistent": true
